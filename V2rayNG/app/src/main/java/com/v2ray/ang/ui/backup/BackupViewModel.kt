@@ -156,8 +156,12 @@ class BackupViewModel(application: Application) : BaseViewModel(application) {
                     return@launchLoading
                 }
 
-                if (performRestore(cacheDir, target)) {
+                val outcome = performRestore(cacheDir, target)
+                if (outcome.success) {
                     toastSuccess(R.string.toast_success)
+                    if (outcome.loginDataIgnored) {
+                        toast(getString(R.string.backup_warn_login_ignored))
+                    }
                     _viewModelEvent.send(BackupViewModelEvent.RestoreSuccess)
                 } else {
                     toastError(R.string.toast_failure)
@@ -180,7 +184,7 @@ class BackupViewModel(application: Application) : BaseViewModel(application) {
         val backupDir = cacheDir.absolutePath + "/$folderName"
         val outputZipFilePath = "${cacheDir.absolutePath}/$folderName.zip"
 
-        var count = 0
+        var count = 0L
         val loginState = BanShanBackup.captureLocalLogin()
         try {
             // The protected BanShan subscription and its login flags never enter the archive.
